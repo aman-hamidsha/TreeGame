@@ -1,0 +1,121 @@
+#------# BRANCH #------#
+----- ATTRIBUTES ----- (also see branch-attribute-visualisation.png)
+static int thickness            - 0 if the branch is thick
+                                  1 if the branch is medium
+                                  2 if the branch is thin
+
+static int child                - the class corresponding to the branch that grows off this one
+                                  for THICKBRANCHL: child = MEDIUMBRANCHL
+                                  for THINBRANCH: child = None
+
+static float[][] lengthList     - each branch has three possible lengths: short, medium long
+                                  these can be accessed with lengthList[thickness][pseudoLength] where
+                                    thickness is a static attribute assigned to each branch class
+                                    pseudoLength is a number corresponding to a length value
+                                      (0 for short, 1 for medium, 2 for long)
+
+static pg.surface[][] imageList - contains images corresponding to the nine total possible
+                                  combinations of branch lengths and widths
+                                  these can be accessed with imageList[thickness][pseudoLength]
+                                  see static float[][] lengthList for a detailed description of
+                                  thickness and pseudoLength
+
+static float[] widthList        - the width of each branch size. These can be accessed with
+                                  widthList[thickness]
+
+int rotation                    - value between -pi/4 and pi/4 specifying the angle between the branch and tree
+
+pg.surface image                - the image of the branch
+
+float w,l                       - width and length of the branch
+
+pg.Rect rect                    - the rectangle representing the width, height, x and y position of the
+                                  rectangle binding the branch
+                                  How is rect.height different from w? Well, w is the width of the branch, which
+                                  is the same, regardless of how the branch is rotated. rect.height will change
+                                  depending on the rotation, since an angled branch will be quote unquote taller
+                                  than a horizontal branch with no rotation because it will need a taller rect
+                                  to fully contain it
+
+object[] children               - contains 0-3 smaller branches growing off the end of this one
+
+Vector2 pivot                   - the point that the branch is rotating around. It's where it attaches to the
+                                  previous branch/trunk
+
+bool isLeft                     - true if the branch grows left, false if it grows right
+
+
+----- METHODS -----
+CONSTRUCTOR (Vector2 pivot)
+the idea here is that branches will be randomly generated on one side and then copied to the other
+when generating branches on one side, call the one-argument constructor, which will randomly generate offshoot branches (aka children)
+in order to manually define offshoot branches, call the many-argument constructor, which will not randomly generate any children
+so the one-argument constructor can be used to easily randomly generate branches on one side
+the many-argument constructor is used to mirror the branches on the randomly generated side to the other side
+
+parameters:
+    Vector2 pivot - where the branch attaches to the previous branch/trunk
+
+pseudocode:
+    length = random integer between 0 and 2 inclusive
+    rotation = random float between -pi/4 and pi/4 (doesn't matter if it's inclusive)
+    CONSTRUCTOR(pivot, length, rotation, true)
+    GENERATECHILDREN()
+
+
+CONSTRUCTOR (Vector2 pivot, int pseudoLength, float rotation, bool isLeft)
+
+parameters:
+    Vector2 pivot    - see Constructor(Vector2 pivot)
+    int pseudoLength - the length the branch. Each branch type has 3 variations: short, medium long
+                       these lengths are represented with the numbers 0,1,2 respectively
+    float rotation   - the rotation of the branch
+    bool isLeft      - if the branch is growing left or right
+
+pseudocode:
+    self.l = lengthList[self.thickness][pseudoLength]
+    self.w = widthList[self.thickness]
+    self.rotation = rotation
+    self.image = imageList[self.thickness]
+    self.isLeft = isLeft
+    ROTATEONPIVOT()
+
+
+ROTATEONPIVOT () - https://yewtu.be/watch?v=-a4XPffa8Xg
+Takes no parameters since it uses class variables
+
+
+GENERATECHILDREN ()
+generates offshoot branches from another branch
+
+pseudocode:
+    if child != null: # prevents twigs generating any offshoot branches
+        repeat x times, where x is a random integer between 0 and 2 inclusive:
+            this.children.append(this.Child(Vector2(x, y))) where
+                Vector2(x, y) = Vector2(z, 0).rotate(-this.rotation) + this.pivot where
+                    z = -(this.w-this.l/2) if this.isLeft else this.w-this.l/2
+
+
+#------# THICKBRANCH #------#
+inherits from:
+    BRANCH
+
+attributes:
+    thickness = 0
+    child = MEDIUMBRANCH
+
+#------# MEDIUMBRANCH #------#
+inherits from:
+    BRANCH
+
+attributes:
+    thickness = 1
+    child = THINBRANCH
+
+#------# THINBRANCH #------#
+inherits from:
+    BRANCH
+
+attributes:
+    thickness = 2
+    child = null
