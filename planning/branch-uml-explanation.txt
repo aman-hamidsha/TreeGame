@@ -1,14 +1,19 @@
 #------# BRANCH #------#
+Access classes in main.py using branch.CLASSNAME
+eg: b = branch.ThickBranch()
+
 ----- ATTRIBUTES ----- (also see branch-attribute-visualisation.png)
 static int thickness            - 0 if the branch is thick
                                   1 if the branch is medium
                                   2 if the branch is thin
+                                  nb: declared only in subclasses of BRANCH
 
 static int child                - the class corresponding to the branch that grows off this one
                                   for THICKBRANCHL: child = MEDIUMBRANCHL
                                   for THINBRANCH: child = None
+                                  nb: declared only in subclasses of BRANCH
 
-static float[][] lengthList     - each branch has three possible lengths: short, medium long
+static int  [][] lengthList     - each branch has three possible lengths: short, medium long
                                   these can be accessed with lengthList[thickness][pseudoLength] where
                                     thickness is a static attribute assigned to each branch class
                                     pseudoLength is a number corresponding to a length value
@@ -20,14 +25,19 @@ static pg.surface[][] imageList - contains images corresponding to the nine tota
                                   see static float[][] lengthList for a detailed description of
                                   thickness and pseudoLength
 
-static float[] widthList        - the width of each branch size. These can be accessed with
+static int[] widthList          - the width of each branch size. These can be accessed with
                                   widthList[thickness]
+
+static int midpoint             - centre of the screen
+
+static int distanceFromMidpoint - distance from the centre of the screen where the pivot of a branch is
+                                  (ie: the point it grows from)
 
 int rotation                    - value between -pi/4 and pi/4 specifying the angle between the branch and tree
 
 pg.surface image                - the image of the branch
 
-float w,l                       - width and length of the branch
+int w,l                         - width and length of the branch
 
 pg.Rect rect                    - the rectangle representing the width, height, x and y position of the
                                   rectangle binding the branch
@@ -44,8 +54,13 @@ Vector2 pivot                   - the point that the branch is rotating around. 
 
 bool isLeft                     - true if the branch grows left, false if it grows right
 
+int pseudoLength                - used to access lengthList, widthList and imageList
+                                  saved because it's needed when the branch is being copied
 
 ----- METHODS -----
+Diagram for all these constructors can be found in branch-constructors-diagram.png
+
+
 CONSTRUCTOR (Vector2 pivot)
 the idea here is that branches will be randomly generated on one side and then copied to the other
 when generating branches on one side, call the one-argument constructor, which will randomly generate offshoot branches (aka children)
@@ -62,6 +77,9 @@ pseudocode:
     CONSTRUCTOR(pivot, length, rotation, true)
     GENERATECHILDREN()
 
+CONSTRUCTOR (int y)
+Similar to the last constructor, save for the fact that the x-value of the pivot is auto-generated
+Used for thick branches because we know where they'll be horizontally attaching to the trunk
 
 CONSTRUCTOR (Vector2 pivot, int pseudoLength, float rotation, bool isLeft)
 
@@ -78,6 +96,7 @@ pseudocode:
     self.rotation = rotation
     self.image = imageList[self.thickness]
     self.isLeft = isLeft
+    self.children = [] # have to initialise this list because we're gonna be adding to it
     ROTATEONPIVOT()
 
 
@@ -89,33 +108,62 @@ GENERATECHILDREN ()
 generates offshoot branches from another branch
 
 pseudocode:
-    if child != null: # prevents twigs generating any offshoot branches
+    if child != None: # prevents twigs generating any offshoot branches
         repeat x times, where x is a random integer between 0 and 2 inclusive:
             this.children.append(this.Child(Vector2(x, y))) where
                 Vector2(x, y) = Vector2(z, 0).rotate(-this.rotation) + this.pivot where
                     z = -(this.w-this.l/2) if this.isLeft else this.w-this.l/2
 
 
+DRAW (pg.Surface screen)
+recursively draws this branch and its offshoots 
+
+parameters:
+    pg.Surface screen - screen that this method will draw to
+
+returns:
+    None
 #------# THICKBRANCH #------#
 inherits from:
     BRANCH
 
 attributes:
-    thickness = 0
-    child = MEDIUMBRANCH
+    static thickness = 0
+    object child = MEDIUMBRANCH
+
+methods:
+    GENERATEPIVOT (int y) -> Vector2 pivot
+        puts the branch some pixels away from the centre of the screen to make it look
+        like the branch is growing from the middle outwards to the left
+        prevents you having to specify the same x-position whenever you're creating a
+        new branch
+
+        parameters:
+            int y         - the y-position where the branch will be spawned
+
+        returns:
+            Vector2 pivot - the pivot of the branch corresponding to the given y-position
+
+    CONSTRUCTOR (ThickBranch b)
+        The new branch formed by this constructor mirrors the left-facing branch passed as
+        a parameter and grows to the right. Calls the many-argument constructor in the
+        Branch class. Works recursively on b's children (ie: copies them as well)
+
+        parameters:
+            Thickbranch b - a left-facing thick branch
 
 #------# MEDIUMBRANCH #------#
 inherits from:
     BRANCH
 
 attributes:
-    thickness = 1
-    child = THINBRANCH
+    static int thickness = 1
+    object child = THINBRANCH
 
 #------# THINBRANCH #------#
 inherits from:
     BRANCH
 
 attributes:
-    thickness = 2
-    child = null
+    static int thickness = 2
+    object child = null
