@@ -53,5 +53,7 @@ class TestBranches(unittest.TestCase):
             sum = self.CountChildren(child, sum)
         return sum
 
+    def 
+
 if __name__ == "__main__":
     unittest.main()
