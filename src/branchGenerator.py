@@ -32,13 +32,19 @@ class BranchGenerator():
 
         # stops branches generating too high or too low. If they are generating too high or too low, tweak these numbers
         # basically, the branch will generate x pixels above the branch beneath it, where x is a random number between the upper and lower bounds
-        generationUpperBound = jumpHeight + 150
+        # generationUpperBound = jumpHeight + 150
         generationLowerBound = jumpHeight - 30
-        # range = generationUpperBound - generationLowerBound
+
+        # actually, scrap that. The generation is sometimes really slow because the branches that we're randomly generating don't meet a set of criteria, so we need to re-generate them
+        # this took ages, so I made a currentUpper variable, which increments when a branch is scrapped because it doesn't meet the criteria
+        # it's reset when a new branch is created
+        # it basically expands the range in which you can make branches. Bigger range means more possibilities for branch to be functional
+        currentUpper = jumpHeight
 
         while topHeight > maxHeight:
+            currentUpper += 20
             # position of the last branch is topHeight, so this number generates a branch x pixels above the branch beneath it
-            randomPos = generationHeight - random.randint(generationLowerBound, generationUpperBound)
+            randomPos = generationHeight - random.randint(generationLowerBound, currentUpper)
             b = branch.ThickBranch(int(randomPos))
 
             # print(f"randomPos: {randomPos}, generationheight: {generationHeight}, lowestPoint: {b.LowestPoint()}, topheight: {topHeight}, ({topHeight - b.LowestPoint()} < {jumpHeight - padding})")
@@ -48,12 +54,14 @@ class BranchGenerator():
             if (topHeight - b.LowestPoint() < jumpHeight - padding):
 
                 # also an additional check to make sure that the branches aren't too low - if they're too low, they overlap with other branches a lot and it gets super messy
-                if  (jumpHeight/2 < topHeight - b.LowestPoint()):
+                if  (jumpHeight/4 < topHeight - b.LowestPoint()):
 
                     # the player can reach the branch, that means that the branch is acceptable and we add it to the list and update topHeight and generationHeight
                     topHeight = b.HighestPoint()
                     generationHeight = b.pivot[1]
                     branches.append(b)
+
+                    currentUpper = jumpHeight
 
             # if the branch was too high to reach via a jump, it's bad generation, so go to the beginning of the while loop and try again
         
