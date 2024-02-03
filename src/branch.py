@@ -34,9 +34,9 @@ class Branch:
     # index using lengthList[pseudoThickness][pseudoLength]
     # thick branches have a pseudoThickness of 0, thin branches have a pseudoThickness of 2
     # each branch thickness has three possiblePseudolengths, where 0 is the longest
-    lengthList = [[200, 150, 100],
-                  [120, 70, 40], 
-                  [52, 36, 20]]
+    lengthList = [[200, 150, 120],
+                  [150, 110, 70], 
+                  [100, 75, 40]]
 
     # the actual thicknesses of thick, medium and thin branches
     widthList = [20,12,6]
@@ -116,8 +116,12 @@ class Branch:
             rotatedVector = horizontalDisplacementVector.rotate(self.rotation)
             childPivot = rotatedVector + self.pivot
 
-            # actually generate the children
-            for i in range(random.randint(1, 3)):
+            # actually generate the children. Will generate between 0 and 3 children
+            # if the number of children is low, it's rerolled, effectively meaning that branches have a higher chance of having many children
+            randNum = random.randint(0, 3)
+            if randNum < 2: randNum = random.randint(0, 3)
+
+            for i in range(randNum):
                 self.children.append(self.child(childPivot))
 
     # draws the branch and its offshoots
@@ -125,6 +129,26 @@ class Branch:
         screen.blit(self.image, self.rect)
         for child in self.children:
             child.Draw(screen)
+
+    # HIGHESTPOINT #
+    # gets highest (smallest) y-value of a branch and any of its offshoots
+    # parameters:
+        # b - the branch we want to find the highest y for
+
+    def HighestPoint(self) -> int:
+        m = self.rect[1]
+        for child in self.children:
+            m = min(child.HighestPoint(), m)
+        return m
+
+    # LOWESTPOINT #
+    # like the above function
+    def LowestPoint(self) -> int:
+        m = self.rect[1] + self.rect[3]
+        for child in self.children:
+            m = max(child.LowestPoint(), m)
+        return m
+
 
 class ThinBranch(Branch):
     thickness = 2
