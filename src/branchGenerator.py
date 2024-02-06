@@ -94,6 +94,6 @@ class BranchGenerator():
                     if newPos != None:
                         collidedL = True
                         player.rect.topleft = newPos
-
+                        player.canJump = True
                 # since we know that the right branches mirror the left branches, if a left branch is visible, so is a right branch, so we don't need to run the if statement separately for the right branches
                 self.branchesR[i].Draw(screen)
