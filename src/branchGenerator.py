@@ -72,6 +72,9 @@ class BranchGenerator():
         for b in branches:
             self.branchesR.append(branch.ThickBranch(b))
 
+        for b in self.branchesL + self.branchesR:
+            b.GenerateLeaves()
+
     # DRAW #
     # Draws all the on-screen branches
     # parameters:

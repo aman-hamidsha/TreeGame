@@ -13,7 +13,7 @@ class Player():
         self.prevRect = self.rect.copy()
         RED = (255, 0, 0)
         self.draw(self.image,RED)
-        self.canJump = True 
+        self.canJump = True
 
     def Update(self, keys: list, screen: pg.Surface):
         self.RegisterInput(keys)

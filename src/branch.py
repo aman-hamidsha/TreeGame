@@ -3,6 +3,8 @@ import random
 from pygame.math import Vector2
 import math
 
+from src import leaf
+
 # creates 9 strings corresponding to every possible branch type (eg: "thickmedium", "thinlong" or "thickshort"), then loads pngs with those names (eg: "thinlong.png")
 # takes the Branch class and the directory the images are stored in as parameters. Remember to include the slash when specifying the directory (eg: "images/" instead of "images")
 # returns a 2d array of these images
@@ -100,6 +102,29 @@ class Branch:
             self.leftCorner  = corner2
             self.rightCorner = corner1
 
+    def GenerateLeaves(self):
+        self.leaves = []
+
+        chanceOfLeaf = random.random()
+        j = 0
+        for i in range(len(self.chanceOfLeaves)):
+            if chanceOfLeaf < self.chanceOfLeaves[i]:
+                j = len(self.chanceOfLeaves)-i
+                break
+
+        for _ in range(j):
+            if self.isLeft:
+                leafPos = self.pivot + Vector2(-(self.l - self.w)*random.random(), 0).rotate(self.rotation)
+            else:
+                leafPos = self.pivot + Vector2((self.l - self.w)*random.random(), 0).rotate(self.rotation)
+            
+            zeroOrOne = random.randint(0,1)
+            leafPos = leafPos + Vector2(0, (-1)**(zeroOrOne)*self.w/2).rotate(self.rotation)
+            self.leaves.append(leaf.Leaf(leafPos, random.randint(45, 135) if zeroOrOne == 0 else random.randint(225, 315)))
+
+        for child in self.children:
+            child.GenerateLeaves()
+
     # used to copy branches on the left side of the screen to the right side
     def CopyConstructor(self, branchToCopy: object):
         pivot = Vector2(self.midpoint + (self.midpoint-branchToCopy.pivot[0]), branchToCopy.pivot[1])
@@ -141,8 +166,12 @@ class Branch:
     # draws the branch and its offshoots
     def Draw(self, screen: pg.Surface):
         screen.blit(self.image, self.rect)
+        
         for child in self.children:
             child.Draw(screen)
+        
+        for leaf in self.leaves:
+            leaf.Draw(screen)
     
     def UpdateCollision(self, player):
         collided = False
@@ -265,14 +294,17 @@ class Branch:
 
 class ThinBranch(Branch):
     thickness = 2
+    chanceOfLeaves = [0.8, 0.7, 0.3, 0.2, 0.1]
     child = None
 
 class MediumBranch(Branch):
     thickness = 1
+    chanceOfLeaves = [0.5, 0.4, 0.2, 0.1, 0.05]
     child = ThinBranch
 
 class ThickBranch(Branch):
     thickness = 0
+    chanceOfLeaves = [0.9, 0.7, 0.6, 0.4, 0.3]
     child = MediumBranch
 
     # thickbranches always spawn on the same x-position (on the trunk of the tree), so there's no need to provide an x-argument
