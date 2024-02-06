@@ -79,12 +79,21 @@ class BranchGenerator():
         # screenBottom - the y-value of the bottom of the screen
         # screenTop    - the y-value of the top of the screen
             # these two values are used to determine which branches are on-screen. No point drawing branches that aren't on-screen
-    def Draw(self, screen: pg.Surface, screenBottom: int, screenTop: int):
+    def Update(self, screen: pg.Surface, screenBottom: int, screenTop: int, player):
+        
+        collidedL = collidedR = False
+
         for i in range(len(self.branchesL)):
 
             # check to see if any of the branch is on screen
             if (self.branchesL[i].HighestPoint() < screenBottom and self.branchesL[i].LowestPoint() > screenTop):
                 self.branchesL[i].Draw(screen)
+
+                if not collidedL:
+                    newPos = self.branchesL[i].UpdateCollision(player)
+                    if newPos != None:
+                        collidedL = True
+                        player.rect.topleft = newPos
 
                 # since we know that the right branches mirror the left branches, if a left branch is visible, so is a right branch, so we don't need to run the if statement separately for the right branches
                 self.branchesR[i].Draw(screen)

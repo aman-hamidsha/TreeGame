@@ -53,7 +53,31 @@ class TestBranches(unittest.TestCase):
             sum = self.CountChildren(child, sum)
         return sum
 
-    def 
+    def test_LineIntersection(self):
+        cases = [
+            [Vector2(0, 0), Vector2(2, 2), Vector2(0, 2), Vector2(2, 0), Vector2(1, 1)],
+            [Vector2(-3, 1), Vector2(1, -1), Vector2(-1, 1), Vector2(-1, -1), Vector2(-1, 0)],
+            [Vector2(3, 0), Vector2(3, -2), Vector2(-2, -1), Vector2(4, -1), Vector2(3, -1)],
+            [Vector2(-3, -1), Vector2(-3, 0), Vector2(-2, -2), Vector2(-1, -2), Vector2(-3, -2)]
+        ]
+
+        branch1 = ThickBranch(0)
+        
+        for case in cases:
+            self.assertEqual(
+                Vector2(
+                    branch1.CalculateNumeratorOfLineIntersectionPointX(case[0], case[1], case[2], case[3])/branch1.CalculateDenominatorOfLineIntersectionPoint(case[0], case[1], case[2], case[3]),
+                    branch1.CalculateNumeratorOfLineIntersectionPointY(case[0], case[1], case[2], case[3])/branch1.CalculateDenominatorOfLineIntersectionPoint(case[0], case[1], case[2], case[3])
+                ),
+                case[4]
+            )
+    
+    def test_IsIntersectionValid(self):
+        branch1 = ThickBranch(0)
+        branch1.leftCorner = Vector2(0, 0)
+        branch1.rightCorner = Vector2(2, 0)
+        self.assertFalse(branch1.IsIntersectionValid(Vector2(0, 2), Vector2(2, 1), Vector2(4, 0)))
+
 
 if __name__ == "__main__":
     unittest.main()
