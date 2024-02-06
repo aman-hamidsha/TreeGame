@@ -34,8 +34,8 @@ class Player():
         if self.rect.left < 0:
             self.rect.left = 0
             self.velocity.x = 0
-        elif self.rect.right > screen.get_width():
-            self.rect.right = screen.get_width()
+        elif self.rect.right > (screen.get_width() / 2) - 22:
+            self.rect.right = (screen.get_width() / 2) - 22
 
         if self.rect.top < 0:
             self.rect.top = 0
