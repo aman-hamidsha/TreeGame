@@ -14,13 +14,15 @@ pg.display.set_caption("Tree cliber")
 clock = pg.time.Clock() # needed for constant fps
 FPS = 60
 
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 # needed to tell branches at what x-position to spawn
 branch.Branch.midpoint = int(screen.get_width()/2)
 
-map = branchGenerator.BranchGenerator(screen.get_height()-1000, 40, screen.get_height())
+map = branchGenerator.BranchGenerator(screen.get_height()-1000, 35, screen.get_height())
 
 p1 = player.Player(0, 0)
-
+# p2 = player.Stickman(RED,10,10,0)
 # Game loop
 running = True
 while running:
@@ -38,6 +40,7 @@ while running:
 
     keys = pg.key.get_pressed()
     p1.Update(keys, screen)
+    # p2.Update(keys, screen)
 
     # drawing the randomly-generated tree
     pg.draw.rect(screen, pg.Color("brown"), pg.Rect(screen.get_width()/2-25, 0, 50, screen.get_height()))
