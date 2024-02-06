@@ -57,6 +57,8 @@ bool isLeft                     - true if the branch grows left, false if it gro
 int pseudoLength                - used to access lengthList, widthList and imageList
                                   saved because it's needed when the branch is being copied
 
+Vector2 leftCorner, rightCorner - the top-left and top-right corners of the branch, used for collision calculations
+
 ----- METHODS -----
 Diagram for all these constructors can be found in branch-constructors-diagram.png
 

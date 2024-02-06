@@ -81,16 +81,30 @@ class Branch:
         if self.isLeft:
             self.rotation = rotation
         else:
-            self.rotation = 180-rotation
+            self.rotation = -rotation
 
         self.RotateOnPivot()
+
+        # calculate the top left and right corners of the branch (for collision)
+        if self.isLeft:
+            corner1 = self.pivot + Vector2(self.w/2, -self.w/2).rotate(self.rotation)
+            corner2 = self.pivot + Vector2(-self.l+self.w/2, -self.w/2).rotate(self.rotation)
+        else:
+            corner1 = self.pivot + Vector2(-self.w/2, -self.w/2).rotate(self.rotation)
+            corner2 = self.pivot + Vector2(self.l-self.w/2, -self.w/2).rotate(self.rotation)
+
+        if (corner1[0] < corner2[0]):
+            self.leftCorner  = corner1
+            self.rightCorner = corner2
+        else:
+            self.leftCorner  = corner2
+            self.rightCorner = corner1
 
     # used to copy branches on the left side of the screen to the right side
     def CopyConstructor(self, branchToCopy: object):
         pivot = Vector2(self.midpoint + (self.midpoint-branchToCopy.pivot[0]), branchToCopy.pivot[1])
-        rotation = branchToCopy.rotation + 180
 
-        self.SpecificConstructor(pivot, branchToCopy.pseudoLength, rotation, False)
+        self.SpecificConstructor(pivot, branchToCopy.pseudoLength, branchToCopy.rotation, False)
         
         for childToCopy in branchToCopy.children:
             self.children.append(self.child(childToCopy))
@@ -129,6 +143,18 @@ class Branch:
         screen.blit(self.image, self.rect)
         for child in self.children:
             child.Draw(screen)
+    
+    def UpdateCollision(self, player):
+        collided = False
+        newPos = self.CheckPlayerCollision(player)
+
+        for child in self.children:
+            if newPos != None:
+                return newPos
+            
+            newPos = child.UpdateCollision(player)
+
+        return newPos
 
     # HIGHESTPOINT #
     # gets highest (smallest) y-value of a branch and any of its offshoots
@@ -149,6 +175,93 @@ class Branch:
             m = max(child.LowestPoint(), m)
         return m
 
+    # CHECKPLAYERCOLLISION #
+    # checks if the player is colliding with this branch
+    # parameters:
+        # pg.Rect playerPositionOnPreviousFrame - where the player was last frame
+        # pg.Rect playerPosition                - where the player is this frame
+    # returns:
+        # None if the player isn't colliding with the branch
+        # Vector2 representing player's updated position due to collision with the branch otherwise
+
+    def CheckPlayerCollision(self, player) -> Vector2:
+        a = player.prevRect.bottomleft
+        b = player.prevRect.bottomright
+        c = player.rect.bottomleft
+        d = player.rect.bottomright
+
+        # the denominator will be zero if the lines are parallel, meaning they won't intersect
+        # no intersection means no collision, so we can end the method early
+        denominator1 = self.CalculateDenominatorOfLineIntersectionPoint(a, c, self.leftCorner, self.rightCorner)
+        if denominator1 == 0: return None
+
+        denominator2 = self.CalculateDenominatorOfLineIntersectionPoint(b, d, self.leftCorner, self.rightCorner)
+        if denominator2 == 0: return None
+
+        numerator1X = self.CalculateNumeratorOfLineIntersectionPointX(a, c, self.leftCorner, self.rightCorner)
+        numerator2X = self.CalculateNumeratorOfLineIntersectionPointX(b, d, self.leftCorner, self.rightCorner)
+
+        numerator1Y = self.CalculateNumeratorOfLineIntersectionPointY(a, c, self.leftCorner, self.rightCorner)
+        numerator2Y = self.CalculateNumeratorOfLineIntersectionPointY(b, d, self.leftCorner, self.rightCorner)
+
+        intersection1 = Vector2(numerator1X/denominator1, numerator1Y/denominator1)
+        intersection2 = Vector2(numerator2X/denominator2, numerator2Y/denominator2)
+
+        # make sure that the collision of the two lines is between appropriate bounds
+        # basically checks if the collision occurred on the branch, or on the line extrapolated from the branch
+        isIntersection1Valid = self.IsIntersectionValid(a, c, intersection1)
+        isIntersection2Valid = self.IsIntersectionValid(b, d, intersection2)
+
+        # if there has been a collision within the appropriate bounds, adjust player pos
+        if isIntersection1Valid or isIntersection2Valid:
+
+            m = (self.rightCorner[1] - self.leftCorner[1]) / (self.rightCorner[0] - self.leftCorner[0])
+
+            # if the right corner is higher
+            if self.leftCorner[1] > self.rightCorner[1]:
+
+                # if the rightmost position of the player is not hanging off the branch
+                if d[0] < self.rightCorner[0]:
+                    playerBottomY = m*(d[0] - self.leftCorner[0]) + self.leftCorner[1]
+
+                # if the rightmost position of the player is hanging off the branch, just set the player's position to the highest point on the branch
+                else:
+                    playerBottomY = self.rightCorner[1]
+
+            # if the left corner is higher
+            else:
+
+                # if the leftmost position of the player isn't hanging off the branch
+                if c[0] > self.leftCorner[0]:
+                    playerBottomY = m*(c[0] - self.leftCorner[0]) + self.leftCorner[1]
+                
+                # if the player is hanging off the left edge of the branch:
+                else:
+                    playerBottomY = self.leftCorner[1]
+            
+            # if the player is above the branch, there hasn't been a valid collision but the above code will still run
+            if player.rect.bottom <= playerBottomY or player.prevRect.bottom >= playerBottomY:
+                return None
+
+            # finally, return the new player position
+            return Vector2(c[0], playerBottomY - player.rect.h - 1)
+        
+        # if there hasn't been a valid collision
+        else:
+            return None
+  
+    # stolen from wikipedia (https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection)
+    def CalculateDenominatorOfLineIntersectionPoint(self, a: Vector2, b: Vector2, c: Vector2, d: Vector2):
+        return (a[0] - b[0])*(c[1] - d[1]) - (a[1] - b[1])*(c[0] - d[0])
+
+    def CalculateNumeratorOfLineIntersectionPointX(self, a: Vector2, b: Vector2, c: Vector2, d: Vector2):
+        return (a[0]*b[1] - a[1]*b[0])*(c[0] - d[0]) - (a[0] - b[0])*(c[0]*d[1] - c[1]*d[0])
+
+    def CalculateNumeratorOfLineIntersectionPointY(self, a: Vector2, b: Vector2, c: Vector2, d: Vector2):
+        return (a[0]*b[1] - a[1]*b[0])*(c[1] - d[1]) - (a[1] - b[1])*(c[0]*d[1] - c[1]*d[0])
+
+    def IsIntersectionValid(self, a: Vector2, b: Vector2, intersection: Vector2) -> bool:
+        return max(min(a[0], b[0]), self.leftCorner[0]) <= intersection[0] and intersection[0] <= min(max(a[0], b[0]), self.rightCorner[0])
 
 class ThinBranch(Branch):
     thickness = 2
