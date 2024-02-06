@@ -17,7 +17,9 @@ FPS = 60
 # needed to tell branches at what x-position to spawn
 branch.Branch.midpoint = int(screen.get_width()/2)
 
-map = branchGenerator.BranchGenerator(screen.get_height()-1000, 40, screen.get_height())
+map = branchGenerator.BranchGenerator(screen.get_height()-1000, 35, screen.get_height())
+
+p1 = player.Player(0, 0)
 
 # Game loop
 running = True
@@ -34,14 +36,14 @@ while running:
     # background screen colour
     screen.fill(pg.Color("aqua"))
 
+    keys = pg.key.get_pressed()
+    p1.Update(keys, screen)
+
     # drawing the randomly-generated tree
     pg.draw.rect(screen, pg.Color("brown"), pg.Rect(screen.get_width()/2-25, 0, 50, screen.get_height()))
-
-    # AMAN ---------------------------------------------------------------------------------_#
-    # p1 is the player, replace that with whatever your player object is
-    # i'll add support for the second player later
-    # for optimisation, I'm not checking if the left player is colliding with the right branches because that should never happen in the first place anyway
     map.Update(screen, screen.get_height(), 0, p1)
+
+    screen.blit(p1.image, p1.rect)
 
     # update changes to screen
     pg.display.update()
