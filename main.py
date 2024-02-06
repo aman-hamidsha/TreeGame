@@ -2,7 +2,7 @@ import pygame as pg
 from pygame.math import Vector2
 import random
 import pretty_errors
-from src import branch, branchGenerator, player
+from src import branch, branchGenerator, player, leaf
 
 screen = Vector2(1000, 600)
 
@@ -14,12 +14,14 @@ pg.display.set_caption("Tree cliber")
 clock = pg.time.Clock() # needed for constant fps
 FPS = 60
 
-# needed to tell branches at what x-position to spawn
 branch.Branch.midpoint = int(screen.get_width()/2)
+leaf.Leaf.image = pg.image.load("imgs/leaf.png").convert()
 
 map = branchGenerator.BranchGenerator(screen.get_height()-1000, 35, screen.get_height())
 
+
 p1 = player.Player(0, 0)
+l1 = leaf.Leaf(Vector2(screen.get_width()//2, screen.get_height()//2), 90)
 
 # Game loop
 running = True
@@ -43,8 +45,7 @@ while running:
     pg.draw.rect(screen, pg.Color("brown"), pg.Rect(screen.get_width()/2-25, 0, 50, screen.get_height()))
     map.Update(screen, screen.get_height(), 0, p1)
 
-    screen.blit(p1.image, p1.rect)
-
+    
     # update changes to screen
     pg.display.update()
 
